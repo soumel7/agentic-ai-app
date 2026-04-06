@@ -1,0 +1,52 @@
+# Node
+node_modules/
+
+# Build outputs
+/build/
+/dist/
+/.cache/
+
+# Environment files (sensitive)
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Python venv & caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Chroma/FAISS or other local DBs
+.chroma/
+faiss_index/
+
+# Keys and certs
+*.pem
+*.key
+*.crt
+
+# Misc
+coverage/
+coverage-final.json
+*.tgz
+
+# Allow .env.example (safe template)
+# Keep package-lock.json / yarn.lock committed
