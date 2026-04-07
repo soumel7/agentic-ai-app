@@ -4,7 +4,6 @@ import AgentChat from './components/AgentChat';
 import Sidebar from './components/Sidebar';
 import YouTubeSearch from './components/YouTubeSearch';
 import ToolPanel from './components/ToolPanel';
-import './App.css';
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
@@ -40,8 +39,14 @@ export default function App() {
     setActiveTab('chat');
   };
 
+  const tabs = [
+    { key: 'chat', label: 'Agent Chat' },
+    { key: 'youtube', label: 'YouTube Search' },
+    { key: 'tools', label: 'Tool Panel' },
+  ];
+
   return (
-    <div className="app">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen(o => !o)}
@@ -50,37 +55,49 @@ export default function App() {
         onSelect={id => { setActiveConvId(id); setActiveTab('chat'); }}
         onNew={newConversation}
       />
-      <div className={`main ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <header className="topbar">
-          <button className="icon-btn" onClick={() => setSidebarOpen(o => !o)}>
+
+      <div className={`flex-1 flex flex-col min-w-0 transition-[margin] duration-[250ms] ease-in-out ${sidebarOpen ? 'ml-[260px]' : ''}`}>
+        {/* Topbar */}
+        <header className="h-14 bg-surface-2 border-b border-border flex items-center px-4 gap-4 shrink-0">
+          <button
+            className="bg-transparent border-none text-content-2 cursor-pointer p-1.5 rounded-md flex items-center hover:text-content hover:bg-surface-3 transition-colors"
+            onClick={() => setSidebarOpen(o => !o)}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <div className="brand">
-            <div className="brand-dot"></div>
+
+          <div className="flex items-center gap-2 text-base font-bold text-content">
+            <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" />
             <span>JARVIS</span>
           </div>
-          <nav className="tabs">
-            {[
-              { key: 'chat', label: 'Agent Chat' },
-              { key: 'youtube', label: 'YouTube Search' },
-              { key: 'tools', label: 'Tool Panel' },
-            ].map(t => (
+
+          <nav className="flex gap-1 mx-auto">
+            {tabs.map(t => (
               <button
                 key={t.key}
-                className={`tab ${activeTab === t.key ? 'active' : ''}`}
+                className={`bg-transparent border border-transparent px-3.5 py-1.5 rounded-app text-[13px] font-syne font-medium cursor-pointer transition-all
+                  ${activeTab === t.key
+                    ? 'bg-surface-4 text-accent-3 !border-border-strong'
+                    : 'text-content-2 hover:text-content hover:border-border-strong'}`}
                 onClick={() => setActiveTab(t.key)}
               >
                 {t.label}
               </button>
             ))}
           </nav>
-          <div className="status-badge">
-            <span className="status-dot"></span>
+
+          <div className="flex items-center gap-1.5 text-xs text-success bg-[rgba(52,211,153,0.08)] border border-[rgba(52,211,153,0.2)] px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
             Free APIs
           </div>
-          <button className="icon-btn" onClick={toggleTheme} title="Toggle theme" style={{ marginLeft: 8 }}>
+
+          <button
+            className="bg-transparent border-none text-content-2 cursor-pointer p-1.5 rounded-md flex items-center hover:text-content hover:bg-surface-3 transition-colors ml-2"
+            onClick={toggleTheme}
+            title="Toggle theme"
+          >
             {theme === 'light' ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="4" />
@@ -94,7 +111,7 @@ export default function App() {
           </button>
         </header>
 
-        <div className="content">
+        <div className="flex-1 overflow-hidden flex flex-col">
           {activeTab === 'chat' && activeConv && (
             <AgentChat
               conversation={activeConv}

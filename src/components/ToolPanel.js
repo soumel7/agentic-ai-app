@@ -74,111 +74,121 @@ export default function ToolPanel() {
     setLoading(l => ({ ...l, [toolName]: false }));
   };
 
+  const statusBadge = (loaded, yesText, noText) => (
+    <span className={`text-xs px-2.5 py-0.5 rounded-md font-semibold ${
+      loaded
+        ? 'bg-[rgba(52,211,153,0.15)] text-success'
+        : 'bg-[rgba(248,113,113,0.15)] text-danger'
+    }`}>
+      {loaded ? yesText : noText}
+    </span>
+  );
+
   return (
-    <div className="tools-container">
-      <div className="tools-header">
-        <h2>Tool Panel</h2>
-        <p>Test individual tools and configure API keys. All APIs listed here are free to use.</p>
+    <div className="p-6 overflow-y-auto h-full">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-[22px] font-bold mb-2">Tool Panel</h2>
+        <p className="text-content-2 text-sm">Test individual tools and configure API keys. All APIs listed here are free to use.</p>
       </div>
 
-      {/* API KEY SETTINGS */}
-      <div className="api-info">
-        <h3>API KEYS</h3>
+      {/* API Key Settings */}
+      <div className="bg-surface-2 border border-border rounded-app-lg p-5 mb-6">
+        <h3 className="text-sm font-bold mb-3 text-content-2 tracking-wide">API KEYS</h3>
 
-        <div className="api-row" style={{ marginBottom: 8 }}>
-          <span className="api-key">LLM API Key</span>
-          <span style={{
-            fontSize: 12,
-            padding: '3px 10px',
-            borderRadius: 6,
-            background: llmKeyLoaded ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
-            color: llmKeyLoaded ? '#34d399' : '#f87171',
-            fontWeight: 600
-          }}>
-            {llmKeyLoaded ? '✓ Loaded from .env' : '✗ Not set — add REACT_APP_LLM_API_KEY to .env'}
-          </span>
+        <div className="flex items-center gap-3 py-2 text-[13px]">
+          <span className="text-content-2 flex-1">LLM API Key</span>
+          {statusBadge(llmKeyLoaded, '✓ Loaded from .env', '✗ Not set — add REACT_APP_LLM_API_KEY to .env')}
         </div>
-        <div className="api-row" style={{ alignItems: 'center', gap: 12 }}>
-          <span className="api-key">Provider</span>
-          <select value={llmProvider} onChange={e => { setLlmProvider(e.target.value); localStorage.setItem('llm_provider', e.target.value); }}>
+
+        <div className="flex items-center gap-3 py-2 border-t border-border text-[13px]">
+          <span className="text-content-2 flex-1">Provider</span>
+          <select
+            className="bg-surface-3 border border-border-strong text-content px-2 py-1 rounded-md text-xs font-mono outline-none focus:border-accent"
+            value={llmProvider}
+            onChange={e => { setLlmProvider(e.target.value); localStorage.setItem('llm_provider', e.target.value); }}
+          >
             <option value="anthropic">Anthropic</option>
             <option value="ollama">Ollama (local)</option>
           </select>
-          <span style={{ fontSize: 12, color: 'var(--text3)', marginLeft: 8 }}>
+          <span className="text-xs text-content-3 ml-2">
             Selected provider (also configurable via REACT_APP_LLM_PROVIDER in .env)
           </span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text3)', paddingBottom: 12 }}>
-          Set <code>REACT_APP_LLM_API_KEY</code> in your <code>.env</code> file. Restart the dev server after changes.
-          To switch providers, just update the value — no code changes needed.
+
+        <div className="text-[11px] text-content-3 pb-3">
+          Set <code className="font-mono bg-white/[0.08] px-1 py-0.5 rounded">REACT_APP_LLM_API_KEY</code> in your <code className="font-mono bg-white/[0.08] px-1 py-0.5 rounded">.env</code> file. Restart the dev server after changes.
         </div>
 
-        <div className="api-row" style={{ alignItems: 'center', gap: 12 }}>
-          <span className="api-key">YouTube Data API v3</span>
-          
-          <span style={{
-            fontSize: 12,
-            padding: '3px 10px',
-            borderRadius: 6,
-            background: youtubeKeyLoadedFromEnv ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
-            color: youtubeKeyLoadedFromEnv ? '#34d399' : '#f87171',
-            fontWeight: 600
-          }}>{youtubeKeyLoadedFromEnv ? '✓ Loaded from .env' : '✗ Not set in .env'}</span>
+        <div className="flex items-center gap-3 py-2 border-t border-border text-[13px]">
+          <span className="text-content-2 flex-1">YouTube Data API v3</span>
+          {statusBadge(youtubeKeyLoadedFromEnv, '✓ Loaded from .env', '✗ Not set in .env')}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text3)', paddingBottom: 8 }}>
-          Add <code>REACT_APP_YOUTUBE_API_KEY</code> to your <code>.env</code> and restart the dev server to load it. The input above is a session override only.
+
+        <div className="text-[11px] text-content-3 pb-2">
+          Add <code className="font-mono bg-white/[0.08] px-1 py-0.5 rounded">REACT_APP_YOUTUBE_API_KEY</code> to your <code className="font-mono bg-white/[0.08] px-1 py-0.5 rounded">.env</code> and restart the dev server to load it.
         </div>
       </div>
 
-      {/* TOOLS GRID */}
-      <div className="tools-grid">
+      {/* Tools Grid */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 mb-6">
         {TOOLS_INFO.map(tool => (
-          <div key={tool.toolName} className="tool-card">
-            <div className="tool-card-header">
-              <div className="tool-icon">{tool.icon}</div>
-              <div>
-                <div className="tool-name">{tool.name}</div>
+          <div key={tool.toolName} className="bg-surface-2 border border-border rounded-app-lg p-5 transition-colors hover:border-border-strong">
+            {/* Card header */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-app bg-surface-3 border border-border-strong flex items-center justify-center text-lg">
+                {tool.icon}
               </div>
-              <span className={`tool-badge ${tool.badge}`}>{tool.badge}</span>
+              <div className="text-[15px] font-bold">{tool.name}</div>
+              <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide border
+                ${tool.badge === 'free'
+                  ? 'bg-[rgba(52,211,153,0.12)] text-success border-[rgba(52,211,153,0.25)]'
+                  : 'bg-[rgba(251,191,36,0.1)] text-warning border-[rgba(251,191,36,0.2)]' }`}>
+                {tool.badge}
+              </span>
             </div>
-            <div className="tool-desc">{tool.desc}</div>
+
+            <div className="text-[13px] text-content-2 leading-relaxed mb-3.5">{tool.desc}</div>
+
             {tool.apiUrl && (
-              <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 10 }}>
-                <a href={tool.apiUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent3)' }}>
+              <div className="text-[11px] text-content-3 mb-2.5">
+                <a href={tool.apiUrl} target="_blank" rel="noreferrer" className="text-accent-3 hover:underline">
                   {tool.apiUrl.replace('https://', '')}
                 </a>
               </div>
             )}
+
             <button
-              className="tool-run-btn"
+              className="w-full bg-surface-3 border border-border-strong text-content px-3.5 py-2 rounded-app text-[13px] font-syne font-semibold cursor-pointer transition-all hover:border-accent hover:text-accent-3 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => runTool(tool.toolName, tool.demo)}
               disabled={loading[tool.toolName]}
             >
               {loading[tool.toolName] ? 'Running...' : '▶ Run Demo'}
             </button>
+
             {results[tool.toolName] && (
-              <div className="tool-result">{results[tool.toolName]}</div>
+              <div className="bg-surface-3 border border-border rounded-app p-4 mt-3 text-[13px] leading-[1.7] text-content-2 whitespace-pre-wrap font-mono max-h-[200px] overflow-y-auto">
+                {results[tool.toolName]}
+              </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* SETUP GUIDE */}
-      <div className="api-info">
-        <h3>QUICK SETUP GUIDE</h3>
-        {[
-          { step: '1', text: 'Add REACT_APP_LLM_API_KEY=<your-key> to the .env file at the project root, then restart npm start.', key: 'LLM' },
-          { step: '2', text: 'Get a free YouTube API key at console.cloud.google.com → Enable YouTube Data API v3 → Create credentials.', key: 'YouTube' },
-          { step: '3', text: 'Paste your YouTube key above if you want a session override. Adding it to .env is preferred.', key: null },
-          { step: '4', text: 'Go to Agent Chat and ask anything — the agent uses tools automatically!', key: null },
-        ].map(({ step, text }) => (
-          <div key={step} className="api-row" style={{ alignItems: 'flex-start', gap: 16 }}>
-            <div style={{
-              width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0, marginTop: 1
-            }}>{step}</div>
-            <span style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }}>{text}</span>
+      {/* Setup Guide */}
+      <div className="bg-surface-2 border border-border rounded-app-lg p-5 mb-6">
+        <h3 className="text-sm font-bold mb-3 text-content-2 tracking-wide">QUICK SETUP GUIDE</h3>
+        {([
+          { step: '1', text: 'Add REACT_APP_LLM_API_KEY=<your-key> to the .env file at the project root, then restart npm start.' },
+          { step: '2', text: 'Get a free YouTube API key at console.cloud.google.com → Enable YouTube Data API v3 → Create credentials.' },
+          { step: '3', text: 'Paste your YouTube key above if you want a session override. Adding it to .env is preferred.' },
+          { step: '4', text: 'Go to Agent Chat and ask anything — the agent uses tools automatically!' },
+        ]).map(({ step, text }) => (
+          <div key={step} className="flex items-start gap-4 py-2 border-t border-border first:border-t-0 text-[13px]">
+            <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[11px] font-bold text-white shrink-0 mt-0.5">
+              {step}
+            </div>
+            <span className="text-content-2 leading-relaxed">{text}</span>
           </div>
         ))}
       </div>

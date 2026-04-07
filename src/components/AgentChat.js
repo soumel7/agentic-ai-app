@@ -23,14 +23,12 @@ export default function AgentChat({ conversation, onUpdate }) {
   const ytKey = process.env.REACT_APP_YOUTUBE_API_KEY || localStorage.getItem('youtube_key') || '';
   const llmProvider = process.env.REACT_APP_LLM_PROVIDER || localStorage.getItem('llm_provider') || 'anthropic';
 
-  // Helper: call Ollama local HTTP API with a simple prompt built from the conversation
   const callOllama = async (messagesForPrompt) => {
     try {
       const ollamaUrl = process.env.REACT_APP_OLLAMA_URL || 'http://localhost:11434';
       const model = process.env.REACT_APP_OLLAMA_MODEL || process.env.REACT_APP_LLM_MODEL || 'llama3:latest';
       const apiKeyO = process.env.REACT_APP_OLLAMA_API_KEY || '';
 
-      // Build a plain-text prompt from system + conversation
       let prompt = SYSTEM_PROMPT + '\n\n';
       for (const m of messagesForPrompt) {
         const text = typeof m.content === 'string'
@@ -54,11 +52,9 @@ export default function AgentChat({ conversation, onUpdate }) {
         throw new Error(`Ollama error: ${res.status} ${t}`);
       }
 
-      // Try parsing JSON, fall back to raw text
       const txt = await res.text();
       try {
         const j = JSON.parse(txt);
-        // Many Ollama responses include a text field or `content` fields; try commonly-used paths
         return j.text || j.response || (j.output && j.output[0] && (j.output[0].content || j.output[0].text)) || JSON.stringify(j);
       } catch (e) {
         return txt;
@@ -87,13 +83,11 @@ export default function AgentChat({ conversation, onUpdate }) {
     setInput('');
     setLoading(true);
 
-    // ─── AGENTIC LOOP ───────────────────────────────────────────────────────
     let loopMessages = newMessages;
     let iteration = 0;
-    const maxIterations = 10; // safety limit
+    const maxIterations = 10;
 
     try {
-      // If provider is Ollama, do a single prompt-style call and return its text
       if (llmProvider === 'ollama') {
         const assistantText = await callOllama(loopMessages);
         const assistantMsg = { role: 'assistant', content: assistantText };
@@ -103,7 +97,6 @@ export default function AgentChat({ conversation, onUpdate }) {
         return;
       }
 
-      // Default/legacy: Anthropic loop
       while (iteration < maxIterations) {
         iteration++;
 
@@ -131,18 +124,14 @@ export default function AgentChat({ conversation, onUpdate }) {
         if (!res.ok) throw new Error(data.error?.message || 'API error');
 
         const assistantMsg = { role: 'assistant', content: data.content };
-
-        // Check for tool use (safely handle non-array content)
         const toolUseBlocks = Array.isArray(data.content) ? data.content.filter(b => b.type === 'tool_use') : [];
 
         if (toolUseBlocks.length === 0 || data.stop_reason === 'end_turn') {
-          // Final answer — no more tools
           loopMessages = [...loopMessages, assistantMsg];
           onUpdate(loopMessages);
           break;
         }
 
-        // Execute all tool calls
         const toolResults = [];
         for (const toolBlock of toolUseBlocks) {
           const result = await executeTool(
@@ -157,7 +146,6 @@ export default function AgentChat({ conversation, onUpdate }) {
           });
         }
 
-        // Add assistant message + tool results
         loopMessages = [
           ...loopMessages,
           assistantMsg,
@@ -192,14 +180,12 @@ export default function AgentChat({ conversation, onUpdate }) {
     "Calculate compound interest: 1000 * 1.07 ** 10"
   ];
 
-  // Flatten messages for display
   const displayMessages = [];
   for (const msg of messages) {
     if (msg.role === 'user') {
       if (typeof msg.content === 'string') {
         displayMessages.push({ type: 'user', text: msg.content });
       }
-      // Skip tool_result messages from display (they're internal)
     } else if (msg.role === 'assistant') {
       const blocks = Array.isArray(msg.content) ? msg.content : [{ type: 'text', text: msg.content }];
       const toolCalls = blocks.filter(b => b.type === 'tool_use');
@@ -214,18 +200,25 @@ export default function AgentChat({ conversation, onUpdate }) {
   }
 
   return (
-    <div className="chat-container">
-      <div className="messages">
+    <div className="flex flex-col h-full">
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 scrollbar-thin">
         {displayMessages.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">⚡</div>
-            <div className="empty-title">AgentAI is ready</div>
-            <div className="empty-desc">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-content-3 text-center">
+            <div className="w-16 h-16 rounded-full bg-surface-3 border border-border-strong flex items-center justify-center text-[28px]">
+              ⚡
+            </div>
+            <div className="text-xl font-bold text-content-2">AgentAI is ready</div>
+            <div className="text-sm max-w-[380px] leading-relaxed">
               Ask anything. The agent can check weather, search YouTube, look up countries, convert currencies, do math, and more — all using free APIs.
             </div>
-            <div className="suggestions">
+            <div className="flex flex-wrap gap-2 justify-center mt-2">
               {suggestions.map((s, i) => (
-                <button key={i} className="suggestion-btn" onClick={() => sendMessage(s)}>
+                <button
+                  key={i}
+                  className="bg-surface-3 border border-border-strong text-content-2 px-3.5 py-2 rounded-full text-[13px] font-syne cursor-pointer transition-all hover:border-accent hover:text-accent-3"
+                  onClick={() => sendMessage(s)}
+                >
                   {s}
                 </button>
               ))}
@@ -235,16 +228,16 @@ export default function AgentChat({ conversation, onUpdate }) {
           displayMessages.map((msg, i) => {
             if (msg.type === 'tool_calls') {
               return (
-                <div key={i} style={{ paddingLeft: 44 }}>
+                <div key={i} className="pl-11">
                   {msg.calls.map((call, j) => (
-                    <div key={j} className="tool-call">
-                      <div className="tool-call-header">
+                    <div key={j} className="bg-surface-3 border border-border-strong rounded-lg p-2.5 px-3.5 mb-2 text-xs">
+                      <div className="flex items-center gap-1.5 text-warning font-semibold mb-1.5">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                         </svg>
                         Calling tool: {call.name}
                       </div>
-                      <div className="tool-call-body">
+                      <div className="text-content-2 font-mono">
                         {JSON.stringify(call.input, null, 2)}
                       </div>
                     </div>
@@ -254,16 +247,22 @@ export default function AgentChat({ conversation, onUpdate }) {
             }
             if (msg.type === 'user') {
               return (
-                <div key={i} className="msg user">
-                  <div className="avatar user">U</div>
-                  <div className="bubble">{msg.text}</div>
+                <div key={i} className="flex gap-3 flex-row-reverse animate-slide-up">
+                  <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] font-bold bg-surface-4 border border-border-strong text-content-2">
+                    U
+                  </div>
+                  <div className="max-w-[72%] px-4 py-3 rounded-app-lg text-sm leading-[1.7] bg-accent text-white rounded-br-[4px]">
+                    {msg.text}
+                  </div>
                 </div>
               );
             }
             return (
-              <div key={i} className="msg ai">
-                <div className="avatar ai">A</div>
-                <div className="bubble">
+              <div key={i} className="flex gap-3 animate-slide-up">
+                <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] font-bold bg-gradient-to-br from-accent to-accent-2 text-white">
+                  A
+                </div>
+                <div className="bubble-content max-w-[72%] px-4 py-3 rounded-app-lg text-sm leading-[1.7] bg-surface-2 border border-border rounded-bl-[4px] text-content">
                   <ReactMarkdown>{msg.text}</ReactMarkdown>
                 </div>
               </div>
@@ -271,11 +270,15 @@ export default function AgentChat({ conversation, onUpdate }) {
           })
         )}
         {loading && (
-          <div className="msg ai">
-            <div className="avatar ai">A</div>
-            <div className="bubble">
-              <div className="thinking">
-                <span/><span/><span/>
+          <div className="flex gap-3 animate-slide-up">
+            <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] font-bold bg-gradient-to-br from-accent to-accent-2 text-white">
+              A
+            </div>
+            <div className="max-w-[72%] px-4 py-3 rounded-app-lg text-sm bg-surface-2 border border-border rounded-bl-[4px]">
+              <div className="flex gap-1 items-center py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-content-3 animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-content-3 animate-bounce [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-content-3 animate-bounce [animation-delay:0.4s]" />
               </div>
             </div>
           </div>
@@ -283,11 +286,12 @@ export default function AgentChat({ conversation, onUpdate }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="input-area">
-        <div className="input-row">
+      {/* Input area */}
+      <div className="border-t border-border px-6 py-4 bg-surface">
+        <div className="flex gap-2.5 items-end bg-surface-2 border border-border-strong rounded-app-lg px-3 py-2.5 transition-colors focus-within:border-accent">
           <textarea
             ref={textareaRef}
-            className="chat-input"
+            className="flex-1 bg-transparent border-none text-content text-sm font-syne outline-none resize-none max-h-[120px] leading-relaxed placeholder:text-content-3"
             placeholder="Ask the agent anything… (Shift+Enter for new line)"
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -295,14 +299,18 @@ export default function AgentChat({ conversation, onUpdate }) {
             rows={1}
             disabled={loading}
           />
-          <button className="send-btn" onClick={() => sendMessage(input)} disabled={loading || !input.trim()}>
+          <button
+            className="bg-accent border-none text-white w-9 h-9 rounded-app cursor-pointer flex items-center justify-center shrink-0 transition-all hover:bg-accent-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={() => sendMessage(input)}
+            disabled={loading || !input.trim()}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
           </button>
         </div>
-        <div className="input-hint">
+        <div className="text-[11px] text-content-3 text-center mt-2">
           Enter to send · Shift+Enter for new line · Agent will use tools automatically
         </div>
       </div>
